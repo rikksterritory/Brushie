@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Brushie</title>
+  <meta name="description" content="Brushie — a tiny 2-minute toothbrushing buddy." />
+  <style>
+    /* --- Pixel-y, limited palette --- */
+    :root {
+      --ink: #111;
+      --mint: #c9f7d1;
+      --green: #1f8a70;
+      --cream: #fff7d6;
+      --pink: #ff6ea9;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: var(--mint);
+      color: var(--ink);
+      font-family: "Courier New", Courier, monospace; /* chunky fallback */
+    }
+
+    .screen {
+      min-height: 100%;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--cream);
+      padding: 24px;
+      border: 4px solid var(--ink);
+      box-shadow: 6px 6px 0 var(--ink);
+      max-width: 420px;
+      width: 100%;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 1px;
+    }
+
+    .sub {
+      margin: 0 0 20px;
+      color: var(--green);
+    }
+
+    .timer {
+      font-size: 48px;
+      letter-spacing: 2px;
+      margin: 12px 0 20px;
+    }
+
+    .btn {
+      display: inline-block;
+      background: var(--pink);
+      color: white;
+      border: 4px solid var(--ink);
+      padding: 10px 16px;
+      font-weight: bold;
+      text-decoration: none;
+      cursor: pointer;
+      box-shadow: 4px 4px 0 var(--ink);
+    }
+    .btn:active { transform: translate(2px,2px); box-shadow: 2px 2px 0 var(--ink); }
+
+    .tiny {
+      font-size: 12px;
+      opacity: 0.8;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+  <main class="screen">
+    <section class="card" role="region" aria-label="Brushie timer">
+      <h1>🪥 Brushie</h1>
+      <p class="sub">Two-minute tooth quest</p>
+
+      <div class="timer" id="time">02:00</div>
+
+      <button id="start" class="btn" aria-label="Start brushing timer">Start Brushing</button>
+      <div class="tiny" id="status" aria-live="polite">Idle</div>
+    </section>
+  </main>
+
+  <script>
+    // Simple 2-minute countdown with three states: idle → brushing → finished
+    const startBtn = document.getElementById('start');
+    const timeEl = document.getElementById('time');
+    const statusEl = document.getElementById('status');
+
+    let remaining = 120;   // seconds
+    let tick = null;       // interval id
+    let state = 'idle';    // 'idle' | 'brushing' | 'finished'
+
+    function render() {
+      const m = String(Math.floor(remaining / 60)).padStart(2, '0');
+      const s = String(remaining % 60).padStart(2, '0');
+      timeEl.textContent = `${m}:${s}`;
+
+      if (state === 'idle') {
+        startBtn.textContent = 'Start Brushing';
+        statusEl.textContent = 'Idle';
+      } else if (state === 'brushing') {
+        startBtn.textContent = 'Pause';
+        statusEl.textContent = 'Brushing…';
+      } else {
+        startBtn.textContent = 'Restart';
+        statusEl.textContent = 'Done! Minty fresh ✨';
+      }
+    }
+
+    function start() {
+      if (state === 'finished') remaining = 120;
+      state = 'brushing';
+      render();
+      tick = setInterval(() => {
+        remaining--;
+        if (remaining <= 0) {
+          clearInterval(tick);
+          tick = null;
+          remaining = 0;
+          state = 'finished';
+          render();
+          return;
+        }
+        render();
+      }, 1000);
+    }
+
+    function pause() {
+      clearInterval(tick);
+      tick = null;
+      state = 'idle';
+      render();
+    }
+
+    startBtn.addEventListener('click', () => {
+      if (state === 'idle') start();
+      else if (state === 'brushing') pause();
+      else if (state === 'finished') start(); // restart
+    });
+
+    render();
+  </script>
+</body>
+</html>
